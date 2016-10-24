@@ -8,36 +8,54 @@
     <meta name="viewport" content="width=device-width, initial-scale=1"/>
     <style>
       body, html {
-        font-family: "Helvetica";
+        font-family: "Helvetica", sans-serif;
         padding: 0;
         margin: 0;
         border: 0;
+        background: #f8f8f8;
+        width: 100%;
+        height: 100%;
       }
 
       .container {
         margin: auto;
+        margin-top: 40px;
         width: 80%;
+        background: white;
+        padding: 20px 50px;
       }
+
+      .flex {
+        display: flex;
+      }
+
       .treemap {
         position: relative;
         height: 310px;
+        width: 520px;
       }
 
       .node {
         box-sizing: border-box;
         position: absolute;
         overflow: hidden;
+        color: white;
       }
 
       .node-label {
-        padding: 20px;
+        padding: 10px;
         line-height: 1em;
         font-size: 18px;
+        font-family: "Palatino Linotype", serif;
+        font-style: italic;
+        text-transform: lowercase;
       }
 
       .node-value {
-        color: rgba(0,0,0,0.8);
+        color: rgba(255,255,255,0.8);
         font-size: 12px;
+        font-family: "Helvetica", sans-serif;
+        font-style: normal;
       }
 
       div.tooltip { 
@@ -46,12 +64,19 @@
         width: 60px;
         padding: 10px;
         font: 12px sans-serif;
-        background: white;
+        background: black;
+        color: white;
         border: 0px;
         pointer-events: none;
-        opacity: 0.9;
-        border: 1px solid #f8f8f8;
-        border-radius: 5px;
+        opacity: 0.95;
+        border-radius: 3px;
+      }
+
+      .heading {
+        padding: 10px;
+        color: white;
+        background-color: black;
+        font-weight: bold;
       }
 
     </style>
@@ -59,25 +84,116 @@
   </head>
   <body>
     <div class="container">
-      <h1>Engineers in Mountain View</h1>
-      <h2>MBTI</h2>
-      <div class="treemap"></div>
-      <h2>Zodiac</h2>
+      <div>
+        <span class="heading">Engineers in Mountain View</span>
+        <br><br><br><br>
+      </div>
+      <div class="flex">
+        <div>
+          <h2>MBTI</h2>
+          <div class="treemap"></div>
+        </div>
+        <div>
+          <h2>Zodiac</h2>
+          <svg width="450", height="300"></svg>
+        </div>
+      </div>
     </div>
 
     <script>
-      var width = 500,
-          height = 300;
+      var svg = d3.select("svg"),
+          margin = {top: 20, right: 20, bottom: 50, left: 0},
+          width = +svg.attr("width") - margin.left - margin.right,
+          height = +svg.attr("height") - margin.top - margin.bottom;
+
+      var x = d3.scaleBand().rangeRound([0, width]).padding(0.1),
+          y = d3.scaleLinear().rangeRound([height, 0]);
+
+      var g = svg.append("g")
+        .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+
+      var barColors = d3.scaleOrdinal(d3.schemeCategory20b);
+
+      var zodiac = [
+        {id: "Aries",  value: 1, people: "Yannis"},
+        {id: "Taurus", value: 5, people: "Gayoung, Kevin, Max, Pratik, Scott"},
+        {id: "Gemini", value: 1, people: "Maggie"},
+        {id: "Cancer", value: 1, people: "Tingyu"},
+        {id: "Leo", value: 1, people: "Christian"},
+        {id: "Virgo", value: 1, people: "Albert"},
+        {id: "Libra", value: 0},
+        {id: "Scorpio", value: 3, people: "Angela, Charmie, Cheng"},
+        {id: "Sagittarius", value: 2, people: "Delaney, Kamprath"},
+        {id: "Capricorn", value: 1, people: "Anshul"},
+        {id: "Aquarius", value: 0},
+        {id: "Pisces", value: 0}
+      ]
+
+      x.domain(zodiac.map(function(d) { return d.id; }));
+      y.domain([0, d3.max(zodiac, function(d) { return d.value; })]);
+
+      g.append("g")
+        .attr("class", "axis axis--x")
+        .attr("transform", "translate(0," + height + ")")
+        .call(d3.axisBottom(x))
+        .selectAll("text")
+          .style("text-anchor", "end")
+          .attr("dx", "-.8em")
+          .attr("dy", "-.3em")
+          .attr("transform", "rotate(-45)");
+
+      var bar = g.selectAll(".bar")
+        .data(zodiac).enter();
+
+      bar.append("rect")
+        .attr("class", "bar")
+        .attr("x", function(d) { return x(d.id); })
+        .attr("y", function(d) { return y(d.value); })
+        .attr("width", x.bandwidth())
+        .attr("height", function(d) { return height - y(d.value); })
+        .attr("fill", function(d, i) {
+          return barColors(d.value);
+        })
+      .on("mouseover", function(d) {
+        d3.select(this).attr("fill-old", d3.select(this).attr("fill"));
+        d3.select(this).attr("fill", "#f1c40f");
+        return tooltip.style("visibility", "visible")
+      })
+      .on("mousemove", function(d) {
+        return tooltip
+          .html(d.people)
+          .style("top", (event.pageY)+"px")
+          .style("left", (event.pageX) + "px");
+      })
+      .on("mouseout", function(d) {
+        d3.select(this).attr("fill", d3.select(this).attr("fill-old"));
+        return tooltip.style("visibility", "hidden");
+      });
+
+      bar.append("text")
+        .attr("text-anchor", "end")
+        .attr("x", function(d) { return x(d.id); })
+        .attr("width", x.bandwidth())
+        .attr("y", function(d) { return y(d.value); })
+        .attr("dy", -3)
+        .attr("dx", x.bandwidth()/2 + 3)
+        .style("font-size", "0.7em")
+        .text(function(d) {
+          return d.value;
+        });
+
+      var width = 450,
+          height = 250;
 
       var format = d3.format(",d");
 
       var color = d3.scaleOrdinal()
-        .range(d3.schemeCategory10
-        .map(function(c) { c = d3.rgb(c); c.opacity = 0.6; return c; }));
+        .range(d3.schemeCategory20
+        .map(function(c) { c = d3.rgb(c); c.opacity = 1; return c; }));
 
       var treemap = d3.treemap()
         .size([width, height])
-        .padding(1)
+        .padding(2)
         .round(true);
 
       var tooltip = d3.select("body").append("div") 
@@ -87,12 +203,15 @@
       var tree = {
         id: "tree",
         children: [
-          { id: "INFP", value: 4, people: "Anshul, Cheng, Kevin, Pratik" },
+          { id: "INFP", value: 5, people: "Anshul, Cheng, Delaney, Kevin, Pratik" },
           { id: "INTP", value: 3, people: "Albert, Angela, Tingyu" },
-          { id: "INTJ", value: 1, people: "Maggie" },
+          { id: "INTJ", value: 2, people: "Kamprath, Maggie" },
+          { id: "INFJ", value: 1, people: "Charmie" },
+          { id: "ENTP", value: 1, people: "Max" },
           { id: "ENFJ", value: 1, people: "Gayoung" },
           { id: "ESTP", value: 1, people: "Yannis" },
-          { id: "ESTJ", value: 1, people: "Scott" }
+          { id: "ESTJ", value: 1, people: "Scott" },
+          { id: "ISFP", value: 1, people: "Christian" }
         ]
       };
       var root = d3.hierarchy(tree)
@@ -120,6 +239,8 @@
 
       d3.selectAll(".node")
         .on("mouseover", function(d) {
+          d3.select(this).attr("old-color", d3.select(this).style("background"))
+          d3.select(this).style("background", "#f1c40f");
           return tooltip.style("visibility", "visible")
         })
         .on("mousemove", function(d) {
@@ -129,6 +250,7 @@
             .style("left", (event.pageX) + "px");
         })
         .on("mouseout", function(d) {
+          d3.select(this).style("background", d3.select(this).attr("old-color"));
           return tooltip.style("visibility", "hidden");
         });
 
