@@ -1,0 +1,137 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8"/>
+    <meta http-equiv="x-ua-compatible" content="ie=edge"/>
+    <title>Engineering Personalities</title>
+    <meta name="description" content=""/>
+    <meta name="viewport" content="width=device-width, initial-scale=1"/>
+    <style>
+      body, html {
+        font-family: "Helvetica";
+        padding: 0;
+        margin: 0;
+        border: 0;
+      }
+
+      .container {
+        margin: auto;
+        width: 80%;
+      }
+      .treemap {
+        position: relative;
+        height: 310px;
+      }
+
+      .node {
+        box-sizing: border-box;
+        position: absolute;
+        overflow: hidden;
+      }
+
+      .node-label {
+        padding: 20px;
+        line-height: 1em;
+        font-size: 18px;
+      }
+
+      .node-value {
+        color: rgba(0,0,0,0.8);
+        font-size: 12px;
+      }
+
+      div.tooltip { 
+        position: absolute;
+        text-align: center;
+        width: 60px;
+        padding: 10px;
+        font: 12px sans-serif;
+        background: white;
+        border: 0px;
+        pointer-events: none;
+        opacity: 0.9;
+        border: 1px solid #f8f8f8;
+        border-radius: 5px;
+      }
+
+    </style>
+    <script src="https://d3js.org/d3.v4.min.js"></script>
+  </head>
+  <body>
+    <div class="container">
+      <h1>Engineers in Mountain View</h1>
+      <h2>MBTI</h2>
+      <div class="treemap"></div>
+      <h2>Zodiac</h2>
+    </div>
+
+    <script>
+      var width = 500,
+          height = 300;
+
+      var format = d3.format(",d");
+
+      var color = d3.scaleOrdinal()
+        .range(d3.schemeCategory10
+        .map(function(c) { c = d3.rgb(c); c.opacity = 0.6; return c; }));
+
+      var treemap = d3.treemap()
+        .size([width, height])
+        .padding(1)
+        .round(true);
+
+      var tooltip = d3.select("body").append("div") 
+        .attr("class", "tooltip")       
+        .style("visibility", "hidden")
+
+      var tree = {
+        id: "tree",
+        children: [
+          { id: "INFP", value: 4, people: "Anshul, Cheng, Kevin, Pratik" },
+          { id: "INTP", value: 3, people: "Angela, Albert, Tingyu" },
+          { id: "INTJ", value: 1, people: "Maggie" },
+          { id: "ENFJ", value: 1, people: "Gayoung" },
+          { id: "ESTP", value: 1, people: "Yannis" },
+          { id: "ESTJ", value: 1, people: "Scott" }
+        ]
+      };
+      var root = d3.hierarchy(tree)
+        .sum(function(d) { return d.value; })
+        .sort(function(a, b) { return b.height - a.height || b.value - a.value; });
+
+      treemap(root);
+
+      d3.select(".treemap")
+        .selectAll(".node")
+        .data(root.leaves())
+        .enter().append("div")
+          .attr("class", "node")
+          .style("left", function(d) { return d.x0 + "px"; })
+          .style("top", function(d) { return d.y0 + "px"; })
+          .style("width", function(d) { return d.x1 - d.x0 + "px"; })
+          .style("height", function(d) { return d.y1 - d.y0 + "px"; })
+          .style("background", function(d) { while (d.depth > 1) d = d.parent; return color(d.data.id); })
+        .append("div")
+          .attr("class", "node-label")
+          .text(function(d) { return d.data.id; })
+        .append("div")
+          .attr("class", "node-value")
+          .text(function(d) { return format(d.value); });
+
+      d3.selectAll(".node")
+        .on("mouseover", function(d) {
+          return tooltip.style("visibility", "visible")
+        })
+        .on("mousemove", function(d) {
+          return tooltip
+            .html(d.data.people)
+            .style("top", (event.pageY)+"px")
+            .style("left", (event.pageX) + "px");
+        })
+        .on("mouseout", function(d) {
+          return tooltip.style("visibility", "hidden");
+        });
+
+    </script>
+  </body>
+</html>
