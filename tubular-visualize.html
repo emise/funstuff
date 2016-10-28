@@ -60,8 +60,6 @@
 
       div.tooltip { 
         position: absolute;
-        text-align: center;
-        width: 60px;
         padding: 10px;
         font: 12px sans-serif;
         background: black;
@@ -115,16 +113,18 @@
       var barColors = d3.scaleOrdinal(d3.schemeCategory20b);
 
       var zodiac = [
-        {id: "Aries",  value: 1, people: "Yannis"},
-        {id: "Taurus", value: 5, people: "Gayoung, Kevin, Max, Pratik, Scott"},
-        {id: "Gemini", value: 1, people: "Maggie"},
-        {id: "Cancer", value: 1, people: "Tingyu"},
-        {id: "Leo", value: 1, people: "Christian"},
-        {id: "Virgo", value: 1, people: "Albert"},
+        {id: "Aries",  value: 1, people: "Yannis", dates: "Mar 29"},
+        {id: "Taurus", value: 5, people: "Pratik,Gayoung,Kevin,Max,Scott",
+          dates: "Apr 26,Apr 29,Apr 29,May 12,May 14"},
+        {id: "Gemini", value: 1, people: "Maggie", dates: "Jun 4"},
+        {id: "Cancer", value: 1, people: "Tingyu", dates: "Jul 4"},
+        {id: "Leo", value: 1, people: "Christian", dates: "Aug 11"},
+        {id: "Virgo", value: 1, people: "Albert", dates: "Sep 4"},
         {id: "Libra", value: 0},
-        {id: "Scorpio", value: 3, people: "Angela, Charmie, Cheng"},
-        {id: "Sagittarius", value: 2, people: "Delaney, Kamprath"},
-        {id: "Capricorn", value: 1, people: "Anshul"},
+        {id: "Scorpio", value: 3, people: "Angela,Charmie,Cheng",
+          dates: "Oct 24,Nov 7,Nov 21"},
+        {id: "Sagittarius", value: 2, people: "Kamprath,Delaney", dates: "Dec 12,Dec 15"},
+        {id: "Capricorn", value: 1, people: "Anshul", dates: "Jan 7"},
         {id: "Aquarius", value: 0},
         {id: "Pisces", value: 0}
       ]
@@ -160,8 +160,14 @@
         return tooltip.style("visibility", "visible")
       })
       .on("mousemove", function(d) {
+        let people = d.people.split(",");
+        let date = d.dates.split(",");
+        let tooltipText = "";
+        for (var i = 0; i < people.length; i++) {
+          tooltipText += people[i] + " - " + date[i] + "<br>";
+        }
         return tooltip
-          .html(d.people)
+          .html(tooltipText)
           .style("top", (event.pageY)+"px")
           .style("left", (event.pageX) + "px");
       })
